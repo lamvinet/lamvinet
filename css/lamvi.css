@@ -1,0 +1,254 @@
+body {
+  
+}
+
+#top-container {
+  position: relative;
+  margin-left: 0.5%;
+}
+
+#mid-container {
+  position: relative;
+  margin-left: 0.5%;
+}
+
+#bottom-container {
+  position: relative;
+  margin-left: 4%;
+}
+
+#embed {
+  position: absolute;
+  top: 0;
+  /*border: 1px solid #777;*/
+  margin-bottom: 2px;
+  cursor: move;
+}
+
+#pc {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+#heatmap {
+  position: absolute;
+  top: 0;
+}
+
+#word-label-container {
+  position: relative;
+}
+
+#word-label-div {
+  position: absolute;
+}
+
+#control-main {
+  margin-left: 15px;
+  margin-top: 15px;
+}
+
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+
+/* Creates a small triangle extender for the tooltip */
+/*.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+*/
+/* Style northward tooltips differently */
+/*.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+*/
+
+.hmap-cell {
+  cursor: pointer;
+}
+
+.hmap-cell.zoomed-col {
+  stroke: grey;
+  stroke-width: 0.5;
+}
+
+.hmap-cell.zoomed-col:hover,
+.hmap-cell:hover {
+  stroke: black;
+  stroke-width: 2;
+}
+
+.hmap-highlight-box {
+  stroke: #194367;
+  stroke-width: 1.5;
+  fill: transparent;
+}
+
+.embed-heatmap-connector {
+  stroke: #777;
+  stroke-width: 2.5;
+  fill: transparent;
+  opacity: 0.5;
+}
+
+.embed-unit {
+  cursor: pointer;
+}
+
+.param-sel-label {
+  margin-left: 5px;
+  margin-right: 2px;
+}
+
+.param-sel-select {
+  margin-left: 2px;
+  margin-right: 5px;
+}
+
+.btn-tip {
+  color: black;
+}
+
+#tip-flaggedas-span {
+  color: white;
+}
+
+.heatmap-word-label {
+}
+
+.active-model-indicator {
+  fill: yellow;
+}
+
+/* Baseline */
+.outer-body {
+  margin-top: 15px;
+  margin-left: 15px;
+}
+
+.div-segment {
+  margin-top: 10px;
+}
+
+.model-perf-span {
+  margin-left: 2px;
+  margin-right: 2px;
+}
+
+.query-row {
+  color: red;
+  font-weight: bold;
+}
+
+
+
+
+
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+}
+
+/* The Close Button */
+.modal-close {
+    color: #aaaaaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.modal-close:hover,
+.modal-close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.batchparam {
+  cursor: pointer;
+}
+
+
+/* SPLOM */
+
+#splom {
+  margin-left: 20px;
+}
+
+.splom {
+  font: 10px sans-serif;
+  padding: 10px;
+}
+
+.splom .axis,
+.frame {
+  shape-rendering: crispEdges;
+}
+
+.splom .axis line {
+  stroke: none;
+}
+
+.splom .axis path {
+  display: none;
+}
+
+.splom .cell text {
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.splom .frame {
+  fill: none;
+  stroke: #aaa;
+}
+
+.splom circle {
+  fill-opacity: .7;
+}
+
+.splom .noshow {
+  fill: lightgrey !important;
+  /*fill: #ccc !important;*/
+}
+
+.splom .extent {
+  fill: #000;
+  fill-opacity: .125;
+  stroke: #fff;
+}
