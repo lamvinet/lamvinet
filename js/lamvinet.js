@@ -35,6 +35,104 @@ var good_flags = [];
 var bad_flags = [];
 
 
+INIT_TSNE_MODEL_ID = '-1.0~0~10~5~0.025~0~100'
+
+
+function getInitTSNEVectors()
+{
+    var result = {
+                    'words': [], 
+                    'vectors': []
+                };
+
+    for (var i = 0; i < Object.keys(models[INIT_TSNE_MODEL_ID]['vectors']).length; i++)
+    {
+        result['words'].push(Object.keys(models[INIT_TSNE_MODEL_ID]['vectors'])[i]);
+        result['vectors'].push(models[INIT_TSNE_MODEL_ID]['vectors'][result['words'][i]]);
+    }
+
+    return result;
+}
+
+
+function updateInitTSNE() {
+  var init_Y = init_T.getSolution();
+  init_svg.selectAll('.u')
+    .data(init_tsne_data.words)
+    .attr("transform", function(d, i) { return "translate(" +
+                                          ((init_Y[i][0]*20*init_ss + init_tx) + 400) + "," +
+                                          ((init_Y[i][1]*20*init_ss + init_ty) + 400) + ")"; });
+}
+
+
+var init_svg;
+function drawInitTSNE() {
+    $("#tsne").empty();
+    var init_div = d3.select("#tsne");
+
+    // get min and max in each column of Y
+    var init_Y = init_T.Y;
+    
+    init_svg = init_div.append("svg") // svg is global
+    .attr("width", 800)
+    .attr("height", 800);
+
+    var g = init_svg.selectAll(".b")
+      .data(init_tsne_data.words)
+      .enter().append("g")
+      .attr("class", "u");
+
+    g.append("text")
+      .attr("text-anchor", "top")
+      .attr("font-size", 12)
+      .text(function(d) { return d; })
+      .onclick(function(d) { submitInitialQuery(d); });
+
+    zoomListener = d3.behavior.zoom()
+      .scaleExtent([0.1, 10])
+      .center([0,0])
+      .on("zoom", zoomHandler);
+    zoomListener(init_svg);
+}
+
+
+var init_tx=0, init_ty=0, init_ss=1;
+function zoomHandler() {
+  init_tx = d3.event.translate[0];
+  init_ty = d3.event.translate[1];
+  init_ss = d3.event.scale;
+}
+
+
+var init_stepnum = 0;
+function step() {
+  var init_cost = init_T.step();
+
+  if ( init_T.iter % 10 === 0 )
+  { console.log("t-SNE iteration: " + init_T.iter) };
+
+  if ( init_T.iter === 50 )
+  { drawInitTSNE(); }
+
+  if ( init_T.iter > 50 )
+  { updateInitTSNE(); }
+
+  if ( init_T.iter >= 250 ) 
+  { clearInterval(initTSNEInterval); }
+}
+
+
+// Don't wait for document.ready()
+var init_opt = {epsilon: 10, perplexity: 30};
+var init_T = new tsnejs.tSNE(init_opt); // create a tSNE instance
+
+init_tsne_data = getInitTSNEVectors();
+
+init_T.initDataRaw(init_tsne_data.vectors);
+
+initTSNEInterval = setInterval(step, 0);
+
+
 $(document).ready(function() {
   init();
 });

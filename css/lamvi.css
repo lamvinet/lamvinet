@@ -2,6 +2,29 @@ body {
   
 }
 
+#lamvi-div {
+  visibility: hidden;
+  opacity: 0;
+}
+
+#tsne {
+  margin: auto;
+  width: 50%;
+}
+
+body .u text {
+  font-size: 12px;
+  fill: lightgray;
+  transition: font-size 1s, fill 1s;
+}
+
+.u text:hover {
+  font-size: 30px;
+  fill: dodgerblue;
+  z-index: 99999;
+  cursor: pointer;
+}
+
 #top-container {
   position: relative;
   margin-left: 0.5%;
