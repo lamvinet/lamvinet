@@ -33,6 +33,14 @@ var Y;  // tsne embedding coordinates
 var tsneTimer;
 var good_flags = [];
 var bad_flags = [];
+var window_width = $(window).width();
+var window_height = $(window).height();
+
+
+$(window).resize(function(){
+  window_width = $(window).width();
+  window_height = $(window).height();
+});
 
 
 INIT_TSNE_MODEL_ID = '-1.0~0~10~5~0.025~0~100'
@@ -59,9 +67,13 @@ function updateInitTSNE() {
   var init_Y = init_T.getSolution();
   init_svg.selectAll('.u')
     .data(init_tsne_data.words)
-    .attr("transform", function(d, i) { return "translate(" +
-                                          ((init_Y[i][0]*20*init_ss + init_tx) + 400) + "," +
-                                          ((init_Y[i][1]*20*init_ss + init_ty) + 400) + ")"; });
+    .attr("transform", 
+          function(d, i) { 
+            var translate_x = (init_Y[i][0]*20*init_ss + init_tx) + window_width / 2;
+            var translate_y = (init_Y[i][1]*20*init_ss + init_ty) + window_height / 2;
+
+            return "translate(" + translate_x + "," + translate_y + ")"; 
+          });
 }
 
 
@@ -74,8 +86,8 @@ function drawInitTSNE() {
     var init_Y = init_T.Y;
     
     init_svg = init_div.append("svg") // svg is global
-    .attr("width", 800)
-    .attr("height", 800);
+    .attr("width", '100%')
+    .attr("height", '100%');
 
     var g = init_svg.selectAll(".b")
       .data(init_tsne_data.words)
@@ -86,21 +98,28 @@ function drawInitTSNE() {
       .attr("text-anchor", "top")
       .attr("font-size", 12)
       .text(function(d) { return d; })
-      .onclick(function(d) { submitInitialQuery(d); });
+      .on('click',
+          function(d) { 
+            if ( init_T.iter >= 250 )
+            { submitInitialQuery(d); }
+            else
+            { console.log("Please wait for t-SNE to finish loading.") }
+          });
 
-    zoomListener = d3.behavior.zoom()
+    zoomListenerInitTSNE = d3.behavior.zoom()
       .scaleExtent([0.1, 10])
       .center([0,0])
-      .on("zoom", zoomHandler);
-    zoomListener(init_svg);
+      .on("zoom", zoomHandlerInitTSNE);
+    zoomListenerInitTSNE(init_svg);
 }
 
 
 var init_tx=0, init_ty=0, init_ss=1;
-function zoomHandler() {
+function zoomHandlerInitTSNE() {
   init_tx = d3.event.translate[0];
   init_ty = d3.event.translate[1];
   init_ss = d3.event.scale;
+  updateInitTSNE();
 }
 
 
@@ -111,11 +130,7 @@ function step() {
   if ( init_T.iter % 10 === 0 )
   { console.log("t-SNE iteration: " + init_T.iter) };
 
-  if ( init_T.iter === 50 )
-  { drawInitTSNE(); }
-
-  if ( init_T.iter > 50 )
-  { updateInitTSNE(); }
+  updateInitTSNE();
 
   if ( init_T.iter >= 250 ) 
   { clearInterval(initTSNEInterval); }
@@ -127,14 +142,13 @@ var init_opt = {epsilon: 10, perplexity: 30};
 var init_T = new tsnejs.tSNE(init_opt); // create a tSNE instance
 
 init_tsne_data = getInitTSNEVectors();
-
 init_T.initDataRaw(init_tsne_data.vectors);
-
+drawInitTSNE();
 initTSNEInterval = setInterval(step, 0);
 
 
 $(document).ready(function() {
-  init();
+  console.log("LAMVI is ready.")
 });
 
 
@@ -223,7 +237,8 @@ function get_data()
 }
 
 
-function init() {
+function initLAMVI(initQuery) {
+  $('#lamvi-div').css('display', 'block');
   $("#top-container").height(EMBED_HEIGHT);
   $("#mid-container").height(PC_HEIGHT);
   $("#embed").height(EMBED_HEIGHT);
@@ -289,7 +304,7 @@ function init() {
     .attr("height", WORD_LABEL_HEIGHT)
     .attr("viewBox", "0 0 " + word_label_svg_width + " " + WORD_LABEL_HEIGHT);
 
-  $('#query').val('limited');
+  $('#query').val(initQuery);
   submitQuery();
 
   setup_splom();
@@ -399,6 +414,16 @@ function getQueryData(query)
   data['col_cluster_sort_idxes'] = Array.from({length: data['scores_list'][0].length}, (x,i) => i);
 
   return data;
+}
+
+
+function submitInitialQuery(word)
+{
+  d3.select('#tsne')
+    .transition()
+    .style('opacity', 0);
+
+  initLAMVI(word);
 }
 
 
@@ -932,8 +957,16 @@ function update_embedding_svg(useTransition) {
   var embedUnits = d3.select('#embed-svg').selectAll('.embed-unit');
   if (useTransition)  embedUnits = embedUnits.transition();
   embedUnits.attr("transform", function(d) {
-      return "translate(" + get_embed_x(d.word_idx) + "," +
-                            get_embed_y(d.word_idx) + ")"; });
+      var translate_x = get_embed_x(d.word_idx);
+      var translate_y = get_embed_y(d.word_idx);
+
+      if ( isNaN(translate_x) )
+      { translate_x = 0; }
+
+      if ( isNaN(translate_y) )
+      { translate_y = 0; }
+
+      return "translate(" + translate_x + "," + translate_y + ")"; });
   d3.selectAll('.embed-label').attr('fill-opacity', 0.8);
 }
 
