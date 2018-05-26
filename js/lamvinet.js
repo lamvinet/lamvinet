@@ -43,6 +43,38 @@ $(window).resize(function(){
 });
 
 
+var MODEL_SCRIPTS = [];
+for (var i = 0; i != 24; i++)
+{
+    MODEL_SCRIPTS.push('js/model' + i + '.js');
+}
+
+
+function loadScript(src) {
+    return new Promise(function (resolve, reject) {
+        var s;
+        s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.body.appendChild(s);
+    });
+}
+
+
+async function loadScripts() {
+    for (let MODELS_LOADED = 0; MODELS_LOADED != MODEL_SCRIPTS.length; MODELS_LOADED++) {
+        await loadScript(MODEL_SCRIPTS[MODELS_LOADED]);
+        console.log((MODELS_LOADED + 1) + " models loaded out of " + MODEL_SCRIPTS.length);
+    }
+
+    init_TSNE();
+}
+
+
+loadScripts();
+
+
 INIT_TSNE_MODEL_ID = '-1.0~0~10~5~0.025~0~100'
 
 
@@ -137,14 +169,16 @@ function step() {
 }
 
 
-// Don't wait for document.ready()
-var init_opt = {epsilon: 10, perplexity: 30};
-var init_T = new tsnejs.tSNE(init_opt); // create a tSNE instance
+function init_TSNE()
+{
+    init_opt = {epsilon: 10, perplexity: 30};
+    init_T = new tsnejs.tSNE(init_opt); // create a tSNE instance
 
-init_tsne_data = getInitTSNEVectors();
-init_T.initDataRaw(init_tsne_data.vectors);
-drawInitTSNE();
-initTSNEInterval = setInterval(step, 0);
+    init_tsne_data = getInitTSNEVectors();
+    init_T.initDataRaw(init_tsne_data.vectors);
+    drawInitTSNE();
+    initTSNEInterval = setInterval(step, 0);
+}
 
 
 $(document).ready(function() {
@@ -1229,194 +1263,194 @@ function enumerate_params(params) {
 
 
 function get_jitter(scale) {
-	return scale * (Math.random() * 2 - 1);
+    return scale * (Math.random() * 2 - 1);
 }
 
 
 function jitter_data() {
-	splom_data = pc_data;
+    splom_data = pc_data;
 
-	var jitter_scale = 0.001;
+    var jitter_scale = 0.001;
 
-	splom_data.forEach(function(n) {
-		OUTPUT_PARAMS.forEach(function(p) {
-			if(n[p]) {
-				n[p] = parseFloat(n[p]) + get_jitter(jitter_scale);
-			}
-		});
-	});
+    splom_data.forEach(function(n) {
+        OUTPUT_PARAMS.forEach(function(p) {
+            if(n[p]) {
+                n[p] = parseFloat(n[p]) + get_jitter(jitter_scale);
+            }
+        });
+    });
 }
 
 
 function setup_splom() {
-	jitter_data();
+    jitter_data();
 
-	$('#splom').empty();
-	SPLOM_PARAMS = [];
+    $('#splom').empty();
+    SPLOM_PARAMS = [];
 
-	OUTPUT_PARAMS.forEach(function(n) {
-		SPLOM_PARAMS.push(n);
-	})
+    OUTPUT_PARAMS.forEach(function(n) {
+        SPLOM_PARAMS.push(n);
+    })
 
-	param_options.forEach(function(n) {
-		if (n.values.length > 2) {
-			SPLOM_PARAMS.push(n.name);
-		}
-	});
+    param_options.forEach(function(n) {
+        if (n.values.length > 2) {
+            SPLOM_PARAMS.push(n.name);
+        }
+    });
 
-	var width = 1000,
-    	size = $(window).width() * 0.125,
-    	padding = 20,
-    	n = SPLOM_PARAMS.length,
-    	k = OUTPUT_PARAMS.length;
+    var width = 1000,
+        size = $(window).width() * 0.125,
+        padding = 20,
+        n = SPLOM_PARAMS.length,
+        k = OUTPUT_PARAMS.length;
 
-	var x = d3.scale.linear()
-	    .range([padding / 2, size - padding / 2]);
+    var x = d3.scale.linear()
+        .range([padding / 2, size - padding / 2]);
 
-	var y = d3.scale.linear()
-	    .range([size - padding / 2, padding / 2]);
+    var y = d3.scale.linear()
+        .range([size - padding / 2, padding / 2]);
 
-	var xAxis = d3.svg.axis()
-	    .scale(x)
-	    .orient("top")
-	    .ticks(6);
+    var xAxis = d3.svg.axis()
+        .scale(x)
+        .orient("top")
+        .ticks(6);
 
-	var yAxis = d3.svg.axis()
-	    .scale(y)
-	    .orient("left")
-	    .ticks(6);
+    var yAxis = d3.svg.axis()
+        .scale(y)
+        .orient("left")
+        .ticks(6);
 
-	var color = d3.scale.category10();
+    var color = d3.scale.category10();
 
-	var domainByParam = {};
-	SPLOM_PARAMS.forEach(function(param) {
-		temp = [];
-		splom_data.forEach(function(n) {
-			temp.push(n[param]);
-		});
-		domainByParam[param] = d3.extent(temp);
-	});
+    var domainByParam = {};
+    SPLOM_PARAMS.forEach(function(param) {
+        temp = [];
+        splom_data.forEach(function(n) {
+            temp.push(n[param]);
+        });
+        domainByParam[param] = d3.extent(temp);
+    });
 
-	xAxis.tickSize(-size * n);
-	yAxis.tickSize(-size * n);
+    xAxis.tickSize(-size * n);
+    yAxis.tickSize(-size * n);
 
-	var brush = d3.svg.brush()
-	  .x(x)
-	  .y(y)
-	  .on("brushstart", brushstart)
-	  .on("brush", brushmove)
-	  .on("brushend", brushend);
+    var brush = d3.svg.brush()
+      .x(x)
+      .y(y)
+      .on("brushstart", brushstart)
+      .on("brush", brushmove)
+      .on("brushend", brushend);
 
-	var svg = d3.select("#splom").append("svg")
-	  .classed("splom", true)
-	  .attr("width", size * n + 2 * padding)
-	  .attr("height", size * k + 2 * padding)
-	  .append("g")
-	  .attr("transform", "translate(" + padding + "," + padding + ")");
+    var svg = d3.select("#splom").append("svg")
+      .classed("splom", true)
+      .attr("width", size * n + 2 * padding)
+      .attr("height", size * k + 2 * padding)
+      .append("g")
+      .attr("transform", "translate(" + padding + "," + padding + ")");
 
-	svg.selectAll(".x.axis")
-	  .data(SPLOM_PARAMS)
-	  .enter().append("g")
-	  .attr("class", "x axis")
-	  .attr("transform", function(d, i) { return "translate(" + (n - i - 1) * size + ",5)"; })
-	  .each(function(d) { x.domain(domainByParam[d]); d3.select(this).call(xAxis); });
+    svg.selectAll(".x.axis")
+      .data(SPLOM_PARAMS)
+      .enter().append("g")
+      .attr("class", "x axis")
+      .attr("transform", function(d, i) { return "translate(" + (n - i - 1) * size + ",5)"; })
+      .each(function(d) { x.domain(domainByParam[d]); d3.select(this).call(xAxis); });
 
-	svg.selectAll(".y.axis")
-	  .data(OUTPUT_PARAMS)
-	  .enter().append("g")
-	  .attr("class", "y axis")
-	  .attr("transform", function(d, i) { return "translate(0," + i * size + ")"; })
-	  .each(function(d) { y.domain(domainByParam[d]); d3.select(this).call(yAxis); });
+    svg.selectAll(".y.axis")
+      .data(OUTPUT_PARAMS)
+      .enter().append("g")
+      .attr("class", "y axis")
+      .attr("transform", function(d, i) { return "translate(0," + i * size + ")"; })
+      .each(function(d) { y.domain(domainByParam[d]); d3.select(this).call(yAxis); });
 
-	var cell = svg.selectAll(".cell")
-	  .data(truncate_cross(cross(SPLOM_PARAMS, SPLOM_PARAMS)))
-	  .enter().append("g")
-	  .attr("class", "cell")
-	  .attr("transform", function(d) { return "translate(" + (n - d.i - 1) * size + "," + d.j * size + ")"; })
-	  .each(plot);
+    var cell = svg.selectAll(".cell")
+      .data(truncate_cross(cross(SPLOM_PARAMS, SPLOM_PARAMS)))
+      .enter().append("g")
+      .attr("class", "cell")
+      .attr("transform", function(d) { return "translate(" + (n - d.i - 1) * size + "," + d.j * size + ")"; })
+      .each(plot);
 
-	// Titles for the diagonal.
-	cell.filter(function(d) { return d.i === d.j; }).append("text")
-	  .attr("x", padding)
-	  .attr("y", padding)
-	  .attr("dy", ".71em")
-	  .text(function(d) { return d.x; });
+    // Titles for the diagonal.
+    cell.filter(function(d) { return d.i === d.j; }).append("text")
+      .attr("x", padding)
+      .attr("y", padding)
+      .attr("dy", ".71em")
+      .text(function(d) { return d.x; });
 
-	// Titles for top-level input parameter cells
-	cell.filter(function(d) { return d.j === 0 && OUTPUT_PARAMS.indexOf(d.x) === -1; }).append("text")
-		.attr("x", size * 0.45)
-		.attr("y", -padding)
-		.attr("dy", ".6em")
-		.text(function(d) { return d.x; });
+    // Titles for top-level input parameter cells
+    cell.filter(function(d) { return d.j === 0 && OUTPUT_PARAMS.indexOf(d.x) === -1; }).append("text")
+        .attr("x", size * 0.45)
+        .attr("y", -padding)
+        .attr("dy", ".6em")
+        .text(function(d) { return d.x; });
 
-	cell.call(brush);
+    cell.call(brush);
 
-	function plot(p) {
-		var cell = d3.select(this);
+    function plot(p) {
+        var cell = d3.select(this);
 
-		x.domain(domainByParam[p.x]);
-		y.domain(domainByParam[p.y]);
+        x.domain(domainByParam[p.x]);
+        y.domain(domainByParam[p.y]);
 
-		cell.append("rect")
-		    .attr("class", "frame")
-		    .attr("x", padding / 2)
-		    .attr("y", padding / 2)
-		    .attr("width", size - padding)
-		    .attr("height", size - padding);
+        cell.append("rect")
+            .attr("class", "frame")
+            .attr("x", padding / 2)
+            .attr("y", padding / 2)
+            .attr("width", size - padding)
+            .attr("height", size - padding);
 
-		cell.selectAll("circle")
-		    .data(splom_data)
-		  	.enter().append("circle")
-		    .attr("cx", function(d) { return x(d[p.x]); })
-		    .attr("cy", function(d) { return y(d[p.y]); })
-		    .attr("r", 4)
-		    .style("fill", function(d) { return "lightblue"; });
-	}
+        cell.selectAll("circle")
+            .data(splom_data)
+            .enter().append("circle")
+            .attr("cx", function(d) { return x(d[p.x]); })
+            .attr("cy", function(d) { return y(d[p.y]); })
+            .attr("r", 4)
+            .style("fill", function(d) { return "lightblue"; });
+    }
 
-	var brushCell;
+    var brushCell;
 
-	// Clear the previously-active brush, if any.
-	function brushstart(p) {
-	if (brushCell !== this) {
-	  d3.select(brushCell).call(brush.clear());
-	  x.domain(domainByParam[p.x]);
-	  y.domain(domainByParam[p.y]);
-	  brushCell = this;
-	}
-	}
+    // Clear the previously-active brush, if any.
+    function brushstart(p) {
+    if (brushCell !== this) {
+      d3.select(brushCell).call(brush.clear());
+      x.domain(domainByParam[p.x]);
+      y.domain(domainByParam[p.y]);
+      brushCell = this;
+    }
+    }
 
-	// Highlight the selected circles.
-	function brushmove(p) {
-	var e = brush.extent();
-	svg.selectAll("circle").classed("noshow", function(d) {
-	  return e[0][0] > d[p.x] || d[p.x] > e[1][0]
-	      || e[0][1] > d[p.y] || d[p.y] > e[1][1];
-	});
-	}
+    // Highlight the selected circles.
+    function brushmove(p) {
+    var e = brush.extent();
+    svg.selectAll("circle").classed("noshow", function(d) {
+      return e[0][0] > d[p.x] || d[p.x] > e[1][0]
+          || e[0][1] > d[p.y] || d[p.y] > e[1][1];
+    });
+    }
 
-	// If the brush is empty, select all circles.
-	function brushend() {
-	if (brush.empty()) svg.selectAll(".noshow").classed("noshow", false);
-	}
+    // If the brush is empty, select all circles.
+    function brushend() {
+    if (brush.empty()) svg.selectAll(".noshow").classed("noshow", false);
+    }
 
-	function cross(a, b) {
-	  var c = [], n = a.length, m = b.length, i, j;
-	  for (i = -1; ++i < n;) for (j = -1; ++j < m;) c.push({x: a[i], i: i, y: b[j], j: j});
-	  return c;
-	}
+    function cross(a, b) {
+      var c = [], n = a.length, m = b.length, i, j;
+      for (i = -1; ++i < n;) for (j = -1; ++j < m;) c.push({x: a[i], i: i, y: b[j], j: j});
+      return c;
+    }
 
-	function truncate_cross(c) {
-		var truncate_point = OUTPUT_PARAMS.length - 1;
+    function truncate_cross(c) {
+        var truncate_point = OUTPUT_PARAMS.length - 1;
 
-		var i = 0;
-		while (i < c.length) {
-			if (c[i].j > truncate_point) {
-				c.splice(i, 1);
-			} else {
-				i++;
-			}
-		}
+        var i = 0;
+        while (i < c.length) {
+            if (c[i].j > truncate_point) {
+                c.splice(i, 1);
+            } else {
+                i++;
+            }
+        }
 
-		return c;
-	}
+        return c;
+    }
 }
