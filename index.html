@@ -4,6 +4,7 @@
 <title>LAMVINET</title>
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/lamvi.css">
+    <link rel="stylesheet" type="text/css" href="css/opensans.css">
     <link rel="stylesheet" type="text/css" href="css/d3.parcoords.css">
 </head>
 
@@ -17,6 +18,25 @@
 <script src="js/d3.tip.v0.6.3.js"></script>
 <script src="js/myparcoords.js"></script>
 <script src="js/tsne.js"></script>
+
+<div id="welcome" class="welcome">
+	<svg width="100%" height="100%">
+		<text text-anchor="middle" font-size="100%" font-weight="700" x="50%" y="40%">Welcome to LAMVI.</text>
+		<text id="models_loaded" text-anchor="middle" font-size="50%" font-weight="500" x="50%" y="70%"></text>
+	</svg>
+</div>
+
+<div id="tsne_text" class="tsne_text">
+	<svg width="100%" height="100%">
+		<text id="tsne_load" text-anchor="middle" font-size="90%" font-weight="600" x="50%" y="40%"></text>
+	</svg>
+</div>
+
+<div id="query_text" class="query_text">
+	<svg width="100%" height="100%">
+		<text id="query_load" text-anchor="middle" font-size="90%" font-weight="600" x="50%" y="40%"></text>
+	</svg>
+</div>
 
 <div id="tsne"></div>
 

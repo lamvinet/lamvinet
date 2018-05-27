@@ -38,15 +38,43 @@ var window_height = $(window).height();
 
 
 $(window).resize(function(){
-  window_width = $(window).width();
-  window_height = $(window).height();
+    window_width = $(window).width();
+    window_height = $(window).height();
 });
 
 
-var MODEL_SCRIPTS = [];
-for (var i = 0; i != 24; i++)
+function toggleDisplay(id, opacity_val)
 {
-    MODEL_SCRIPTS.push('js/model' + i + '.js');
+    d3.select('#' + id)
+      .transition()
+      .duration(1000)
+      .style('opacity', opacity_val);
+}
+
+
+function toggleMouse(toggle)
+{
+    var blocker = document.createElement('div');
+    blocker.id = 'blocker';
+
+    if ( toggle )
+    {
+        document.body.appendChild(blocker);
+    }
+    else
+    {
+        $('#blocker').remove();
+    }
+}
+
+
+function getModelScripts()
+{
+    MODEL_SCRIPTS = [];
+    for (var i = 0; i != 24; i++)
+    {
+        MODEL_SCRIPTS.push('js/model' + i + '.js');
+    }
 }
 
 
@@ -65,17 +93,58 @@ function loadScript(src) {
 async function loadScripts() {
     for (let MODELS_LOADED = 0; MODELS_LOADED != MODEL_SCRIPTS.length; MODELS_LOADED++) {
         await loadScript(MODEL_SCRIPTS[MODELS_LOADED]);
-        console.log((MODELS_LOADED + 1) + " models loaded out of " + MODEL_SCRIPTS.length);
+        document.getElementById("models_loaded").innerHTML = (MODELS_LOADED + 1) + " models loaded out of " + MODEL_SCRIPTS.length;
     }
 
-    init_TSNE();
+    toggleDisplay('welcome', 0);
+
+    // Wait a half-second
+    await new Promise((resolve, reject) => setTimeout(resolve, 800));
+
+    toggleDisplay('tsne_text', 1);
+
+    setupInitTSNE();
 }
 
 
-loadScripts();
+async function setupWelcome()
+{
+    // Wait a second
+    await new Promise((resolve, reject) => setTimeout(resolve, 1000));
+
+    toggleDisplay('welcome', 1);
+
+    // Wait a second
+    await new Promise((resolve, reject) => setTimeout(resolve, 1000));
+
+    getModelScripts();
+    loadScripts();
+}
 
 
-INIT_TSNE_MODEL_ID = '-1.0~0~10~5~0.025~0~100'
+$(document).ready(function() {
+    setupWelcome();
+});
+
+
+function setupInitTSNE()
+{
+    INIT_TSNE_MODEL_ID = '-1.0~0~10~5~0.025~0~100'
+
+    init_opt = {epsilon: 10, perplexity: 30};
+    init_T = new tsnejs.tSNE(init_opt); // create a tSNE instance
+
+    init_tx=0;
+    init_ty=0;
+    init_ss=1;
+    init_stepnum = 0;
+
+    init_tsne_is_drawn = false;
+
+    init_tsne_data = getInitTSNEVectors();
+    init_T.initDataRaw(init_tsne_data.vectors);
+    initTSNEInterval = setInterval(stepInitTSNE, 0);
+}
 
 
 function getInitTSNEVectors()
@@ -109,7 +178,6 @@ function updateInitTSNE() {
 }
 
 
-var init_svg;
 function drawInitTSNE() {
     $("#tsne").empty();
     var init_div = d3.select("#tsne");
@@ -143,10 +211,11 @@ function drawInitTSNE() {
       .center([0,0])
       .on("zoom", zoomHandlerInitTSNE);
     zoomListenerInitTSNE(init_svg);
+
+    init_tsne_is_drawn = true;
 }
 
 
-var init_tx=0, init_ty=0, init_ss=1;
 function zoomHandlerInitTSNE() {
   init_tx = d3.event.translate[0];
   init_ty = d3.event.translate[1];
@@ -155,53 +224,33 @@ function zoomHandlerInitTSNE() {
 }
 
 
-var init_stepnum = 0;
-function step() {
-  var init_cost = init_T.step();
+function stepInitTSNE() {
+    var init_cost = init_T.step();
 
-  if ( init_T.iter % 10 === 0 )
-  { console.log("t-SNE iteration: " + init_T.iter) };
+    if ( init_T.iter < 100 )
+    { document.getElementById("tsne_load").innerHTML = "Loading t-SNE visualization: " + init_T.iter + "%"; }
 
-  updateInitTSNE();
+    if ( init_T.iter === 100 )
+    { 
+        toggleDisplay('tsne_text', 0);
+        setTimeout(drawInitTSNE, 1000); 
+    }
 
-  if ( init_T.iter >= 250 ) 
-  { clearInterval(initTSNEInterval); }
+    if ( init_T.iter > 100 && init_tsne_is_drawn)
+    { updateInitTSNE(); }
+
+    if ( init_T.iter >= 250 ) 
+    { clearInterval(initTSNEInterval); }
 }
-
-
-function init_TSNE()
-{
-    init_opt = {epsilon: 10, perplexity: 30};
-    init_T = new tsnejs.tSNE(init_opt); // create a tSNE instance
-
-    init_tsne_data = getInitTSNEVectors();
-    init_T.initDataRaw(init_tsne_data.vectors);
-    drawInitTSNE();
-    initTSNEInterval = setInterval(step, 0);
-}
-
-
-$(document).ready(function() {
-  console.log("LAMVI is ready.")
-});
 
 
 function remove_from_flags(type, w1, w2)
 {
   var flags = [];
 
-  if ( type === 'good' )
-  {
-    flags = good_flags;
-  }
-  else if ( type === 'bad' )
-  {
-    flags = bad_flags;
-  }
-  else
-  {
-    console.error("Invalid type for flag removal.")
-  }
+  if ( type === 'good' ) { flags = good_flags; }
+  else if ( type === 'bad' ) { flags = bad_flags; }
+  else { console.error("Invalid type for flag removal.") }
 
   for ( var i = 0; i != flags.length; i++ )
   {
@@ -218,24 +267,14 @@ function get_flag_data(type, model_id)
 {
   var flags = [];
 
-  if ( type === 'synonyms' )
-  {
-    flags = good_flags;
-  }
-  else if ( type === 'antonyms' )
-  {
-    flags = bad_flags;
-  }
-  else
-  {
-    console.error("Invalid flag type.")
+  if ( type === 'synonyms' ) { flags = good_flags; }
+  else if ( type === 'antonyms' ) { flags = bad_flags; }
+  else {
+    console.error("Invalid flag type.");
     return 0;
   }
 
-  if ( flags.length === 0 )
-  {
-    return 0;
-  }
+  if ( flags.length === 0 ) { return 0; }
 
   var active_model = models[model_id]['vectors']
   var sum = 0;
@@ -451,13 +490,39 @@ function getQueryData(query)
 }
 
 
-function submitInitialQuery(word)
+async function submitInitialQuery(word)
 {
-  d3.select('#tsne')
-    .transition()
-    .style('opacity', 0);
+    d3.select('#tsne')
+      .transition()
+      .style('opacity', 0);
 
-  initLAMVI(word);
+    document.getElementById("query_load").innerHTML = "Submitting query: " + word;
+
+    // Wait a second
+    await new Promise((resolve, reject) => setTimeout(resolve, 1000));
+
+    toggleDisplay('query_text', 1);
+
+    toggleDisplay('lamvi-div', 0);
+
+    toggleMouse(1);
+
+    initLAMVI(word);
+
+    // Wait a second
+    await new Promise((resolve, reject) => setTimeout(resolve, 1000));
+
+    toggleDisplay('query_text', 0);
+
+    // Wait a second
+    await new Promise((resolve, reject) => setTimeout(resolve, 1000));
+
+    toggleDisplay('lamvi-div', 1);
+
+    // Wait a second
+    await new Promise((resolve, reject) => setTimeout(resolve, 1000));
+
+    toggleMouse(0);
 }
 
 
